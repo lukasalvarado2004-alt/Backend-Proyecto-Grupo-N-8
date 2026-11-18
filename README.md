@@ -12,14 +12,3 @@ La siguiente tabla muestra el estado actual de desarrollo de las funcionalidades
 | **Listar usuarios** | 🟡 En avance | La ruta y su lógica están iniciadas, con commits registrados en el repositorio. |
 | **Eliminar o desactivar usuario** | 🟡 En avance | La ruta y su lógica están iniciadas, con commits registrados en el repositorio. |
 
-### 📊 Resumen del progreso
-
-- ✅ **3 funcionalidades completadas.**
-- 🟡 **3 funcionalidades en desarrollo.**
-- 📈 **Progreso general: 50 %** (según cantidad de funcionalidades).
-
-### 📝 Leyenda de estados
-
-- ✅ **Listo:** Funcionalidad implementada.
-- 🟡 **En avance:** Funcionalidad en proceso de desarrollo.
-- ❌ **Pendiente:** Funcionalidad que todavía no se ha comenzado.
