@@ -1,90 +1,117 @@
 
 package com.sonidovivo.backend.service;
 
+import com.sonidovivo.backend.dto.UsuarioEntradaDTO;
+import com.sonidovivo.backend.dto.UsuarioSalidaDTO;
 import com.sonidovivo.backend.model.Usuario;
 import com.sonidovivo.backend.repository.UsuarioRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UsuarioService {
 
-    private final UsuarioRepository repository;
-  
-    public UsuarioService(UsuarioRepository repository) {
-        this.repository = repository;
+    @Autowired
+    private UsuarioRepository repository;
+
+    // Listar todos los usuarios
+    public List<UsuarioSalidaDTO> listar() {
+        return repository.findAll()
+                .stream()
+                .map(this::aSalida)
+                .toList();
     }
 
-    public List<Usuario> listar() {
-        return repository.findAll();
+    // Buscar usuario por ID
+    public UsuarioSalidaDTO buscar(Long id) {
+        return aSalida(obtener(id));
     }
 
-    public Optional<Usuario> buscarPorId(Long id) {
-        return repository.findById(id);
+    // Buscar usuario por correo
+    public UsuarioSalidaDTO buscarPorEmail(String email) {
+        Usuario usuario = repository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Usuario no encontrado"
+                ));
+
+        return aSalida(usuario);
     }
 
-   public Usuario guardar(
-        String nombre,
-        String email,
-        String password,
-        String telefono,
-        String direccion) {
+    // Crear usuario
+    public UsuarioSalidaDTO crear(UsuarioEntradaDTO entrada) {
 
-    if (repository.existsByEmail(email)) {
-        throw new ResponseStatusException(
-            HttpStatus.CONFLICT,
-            "El correo ya esta registrado"
-        );
+        if (repository.existsByEmail(entrada.getCorreo())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "El correo ya esta registrado"
+            );
+        }
+
+        Usuario usuario = new Usuario();
+
+        usuario.setNombre(entrada.getNombre());
+        usuario.setEmail(entrada.getCorreo());
+        usuario.setPasswordHash(entrada.getContrasena());
+        usuario.setTelefono(entrada.getTelefono());
+        usuario.setDireccion(entrada.getDireccion());
+
+        usuario.setRol("CLIENTE");
+        usuario.setFechaRegistro(LocalDateTime.now());
+
+        return aSalida(repository.save(usuario));
     }
 
-    Usuario usuario = new Usuario();
+    // Actualizar usuario
+    public UsuarioSalidaDTO actualizar(
+            Long id, UsuarioEntradaDTO entrada) {
 
-    usuario.setNombre(nombre);
-    usuario.setEmail(email);
-    usuario.setPasswordHash(password);
-    usuario.setTelefono(telefono);
-    usuario.setDireccion(direccion);
-    usuario.setRol("CLIENTE");
-    usuario.setFechaRegistro(LocalDateTime.now());
+        Usuario usuario = obtener(id);
 
-    return repository.save(usuario);
-}
+        usuario.setNombre(entrada.getNombre());
+        usuario.setTelefono(entrada.getTelefono());
+        usuario.setDireccion(entrada.getDireccion());
 
-    public Usuario actualizar(
-            Long id,
-            String nombre,
-            String telefono,
-            String direccion) {
-
-        Usuario usuario = repository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Usuario no encontrado"
-            ));
-
-        usuario.setNombre(nombre);
-        usuario.setTelefono(telefono);
-        usuario.setDireccion(direccion);
-
-        return repository.save(usuario);
+        return aSalida(repository.save(usuario));
     }
 
+    // Eliminar usuario por ID
     public void eliminar(Long id) {
-
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Usuario no encontrado"
+                    HttpStatus.NOT_FOUND,
+                    "Usuario no encontrado"
             );
         }
 
         repository.deleteById(id);
+    }
+
+    // Obtener entidad Usuario
+    private Usuario obtener(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Usuario no encontrado"
+                ));
+    }
+
+    // Convertir entidad a DTO de salida
+    private UsuarioSalidaDTO aSalida(Usuario usuario) {
+        return new UsuarioSalidaDTO(
+                usuario.getIdUsuario(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getTelefono(),
+                usuario.getDireccion(),
+                usuario.getRol(),
+                usuario.getFechaRegistro()
+        );
     }
 }

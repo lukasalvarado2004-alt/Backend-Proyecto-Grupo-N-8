@@ -1,109 +1,103 @@
 
 package com.sonidovivo.backend.controller;
 
-import com.sonidovivo.backend.model.Usuario;
+import com.sonidovivo.backend.dto.UsuarioEntradaDTO;
+import com.sonidovivo.backend.dto.UsuarioSalidaDTO;
 import com.sonidovivo.backend.service.UsuarioService;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Usuarios", description = "Gestion de usuarios")
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/api/v1/usuarios")
 public class UsuarioController {
 
-    private final UsuarioService service;
+    @Autowired
+    private UsuarioService service;
 
-    public UsuarioController(UsuarioService service) {
-        this.service = service;
-    }
-
-    public record UsuarioRespuesta(
-        Long id,
-        String nombre,
-        String email,
-        String telefono,
-        String direccion,
-        String rol
-    ) {}
-
-    public record RegistroUsuario(
-        @NotBlank String nombre,
-        @NotBlank @Email String email,
-        @NotBlank String password,
-        String telefono,
-        String direccion
-    ) {}
-
-    public record ActualizarUsuario(
-        @NotBlank String nombre,
-        String telefono,
-        String direccion
-    ) {}
-
-    private UsuarioRespuesta convertir(Usuario u) {
-        return new UsuarioRespuesta(
-            u.getIdUsuario(),
-            u.getNombre(),
-            u.getEmail(),
-            u.getTelefono(),
-            u.getDireccion(),
-            u.getRol()
-        );
-    }
-
+    @Operation(summary = "Listar usuarios",
+            description = "Lista todos los usuarios registrados")
+    @ApiResponse(responseCode = "200", description = "OK")
     @GetMapping
-    public List<UsuarioRespuesta> listar() {
-        return service.listar().stream()
-            .map(this::convertir)
-            .toList();
+    public List<UsuarioSalidaDTO> listar() {
+        return service.listar();
     }
 
+    @Operation(summary = "Buscar usuario por ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "404", description = "No encontrado")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioRespuesta> buscar(
-            @PathVariable Long id) {
-
-        return service.buscarPorId(id)
-            .map(u -> ResponseEntity.ok(convertir(u)))
-            .orElseGet(() -> ResponseEntity.notFound().build());
+    public UsuarioSalidaDTO buscar(@PathVariable Long id) {
+        return service.buscar(id);
     }
 
+    @Operation(summary = "Buscar usuario por correo")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "404", description = "No encontrado")
+    })
+    @GetMapping("/email/{email:.+}")
+    public UsuarioSalidaDTO buscarPorEmail(
+            @PathVariable String email) {
+
+        return service.buscarPorEmail(email);
+    }
+
+    @Operation(summary = "Registrar un nuevo usuario")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Creado"),
+        @ApiResponse(responseCode = "400", description = "Datos invalidos"),
+        @ApiResponse(responseCode = "409", description = "Correo registrado")
+    })
     @PostMapping
-    public ResponseEntity<UsuarioRespuesta> crear(
-            @Valid @RequestBody RegistroUsuario datos) {
+    public ResponseEntity<UsuarioSalidaDTO> crear(
+            @Valid @RequestBody UsuarioEntradaDTO entrada) {
 
-        Usuario usuario = service.guardar(
-            datos.nombre(),
-            datos.email(),
-            datos.password(),
-            datos.telefono(),
-            datos.direccion()
-        );
+        UsuarioSalidaDTO creado = service.crear(entrada);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(convertir(usuario));
+        return ResponseEntity.created(
+                URI.create("/api/v1/usuarios/" + creado.getId())
+        ).body(creado);
     }
 
+    @Operation(summary = "Actualizar usuario")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "404", description = "No encontrado")
+    })
     @PutMapping("/{id}")
-    public UsuarioRespuesta actualizar(
+    public UsuarioSalidaDTO actualizar(
             @PathVariable Long id,
-            @Valid @RequestBody ActualizarUsuario datos) {
+            @Valid @RequestBody UsuarioEntradaDTO entrada) {
 
-        return convertir(service.actualizar(
-            id,
-            datos.nombre(),
-            datos.telefono(),
-            datos.direccion()
-        ));
+        return service.actualizar(id, entrada);
     }
 
+    @Operation(summary = "Eliminar usuario")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Eliminado"),
+        @ApiResponse(responseCode = "404", description = "No encontrado")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(
             @PathVariable Long id) {
 
         service.eliminar(id);
+
         return ResponseEntity.noContent().build();
     }
 }
