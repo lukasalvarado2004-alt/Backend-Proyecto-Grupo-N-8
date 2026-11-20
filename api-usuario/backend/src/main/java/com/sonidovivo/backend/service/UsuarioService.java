@@ -1,117 +1,106 @@
-
 package com.sonidovivo.backend.service;
 
-import com.sonidovivo.backend.dto.UsuarioEntradaDTO;
-import com.sonidovivo.backend.dto.UsuarioSalidaDTO;
-import com.sonidovivo.backend.model.Usuario;
+import com.sonidovivo.backend.dto.*;
+import com.sonidovivo.backend.exception.RecursoNoEncontradoException;
+import com.sonidovivo.backend.model.*;
 import com.sonidovivo.backend.repository.UsuarioRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@RequiredArgsConstructor
 public class UsuarioService {
+    private final UsuarioRepository usuarios;
+    private final PasswordEncoder passwords;
 
-    @Autowired
-    private UsuarioRepository repository;
-
-    // Listar todos los usuarios
     public List<UsuarioSalidaDTO> listar() {
-        return repository.findAll()
-                .stream()
-                .map(this::aSalida)
-                .toList();
+        return usuarios.findAll().stream().map(this::salida).toList();
     }
 
-    // Buscar usuario por ID
-    public UsuarioSalidaDTO buscar(Long id) {
-        return aSalida(obtener(id));
+    public UsuarioSalidaDTO buscar(Long id, Jwt actor) {
+        comprobarPropietario(id, actor);
+        return salida(obtener(id));
     }
 
-    // Buscar usuario por correo
     public UsuarioSalidaDTO buscarPorEmail(String email) {
-        Usuario usuario = repository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Usuario no encontrado"
-                ));
-
-        return aSalida(usuario);
+        return salida(usuarios.findByEmail(email.strip())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado.")));
     }
 
-    // Crear usuario
-    public UsuarioSalidaDTO crear(UsuarioEntradaDTO entrada) {
-
-        if (repository.existsByEmail(entrada.getCorreo())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "El correo ya esta registrado"
-            );
+    @Transactional
+    public UsuarioSalidaDTO crear(UsuarioEntradaDTO d) {
+        if (d.contrasena().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La contraseña supera 72 bytes en UTF-8.");
         }
-
-        Usuario usuario = new Usuario();
-
-        usuario.setNombre(entrada.getNombre());
-        usuario.setEmail(entrada.getCorreo());
-        usuario.setPasswordHash(entrada.getContrasena());
-        usuario.setTelefono(entrada.getTelefono());
-        usuario.setDireccion(entrada.getDireccion());
-
-        usuario.setRol("CLIENTE");
-        usuario.setFechaRegistro(LocalDateTime.now());
-
-        return aSalida(repository.save(usuario));
-    }
-
-    // Actualizar usuario
-    public UsuarioSalidaDTO actualizar(
-            Long id, UsuarioEntradaDTO entrada) {
-
-        Usuario usuario = obtener(id);
-
-        usuario.setNombre(entrada.getNombre());
-        usuario.setTelefono(entrada.getTelefono());
-        usuario.setDireccion(entrada.getDireccion());
-
-        return aSalida(repository.save(usuario));
-    }
-
-    // Eliminar usuario por ID
-    public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Usuario no encontrado"
-            );
+        if (usuarios.existsByEmail(d.correo())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El correo ya está registrado.");
         }
-
-        repository.deleteById(id);
+        var u = new Usuario();
+        u.setNombre(d.nombre());
+        u.setEmail(d.correo());
+        u.setPasswordHash(passwords.encode(d.contrasena()));
+        u.setTelefono(d.telefono());
+        u.setDireccion(d.direccion());
+        u.setRol(Rol.CLIENTE.name());
+        u.setFechaRegistro(LocalDateTime.now());
+        return salida(usuarios.saveAndFlush(u));
     }
 
-    // Obtener entidad Usuario
+    @Transactional
+    public UsuarioSalidaDTO actualizar(Long id, UsuarioActualizacionDTO d, Jwt actor) {
+        comprobarPropietario(id, actor);
+        var u = obtener(id);
+        u.setNombre(d.nombre());
+        u.setTelefono(d.telefono());
+        u.setDireccion(d.direccion());
+        return salida(u);
+    }
+
+    @Transactional
+    public void eliminar(Long id, Jwt actor) {
+        comprobarOtraCuenta(id, actor);
+        usuarios.delete(obtener(id));
+    }
+
+    @Transactional
+    public UsuarioSalidaDTO cambiarRol(Long id, Rol rol, Jwt actor) {
+        comprobarOtraCuenta(id, actor);
+        var u = obtener(id);
+        u.setRol(rol.name());
+        return salida(u);
+    }
+
+    private void comprobarOtraCuenta(Long id, Jwt actor) {
+        if (id.toString().equals(actor.getSubject())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No puedes eliminar ni cambiar el rol de tu propia cuenta.");
+        }
+    }
+
+    private void comprobarPropietario(Long id, Jwt actor) {
+        boolean admin = Rol.ADMINISTRADOR.name().equals(actor.getClaimAsString("rol"));
+        if (!admin && !id.toString().equals(actor.getSubject())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado.");
+        }
+    }
+
     private Usuario obtener(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Usuario no encontrado"
-                ));
+        return usuarios.findById(id).orElseThrow(
+                () -> new RecursoNoEncontradoException("Usuario no encontrado."));
     }
 
-    // Convertir entidad a DTO de salida
-    private UsuarioSalidaDTO aSalida(Usuario usuario) {
-        return new UsuarioSalidaDTO(
-                usuario.getIdUsuario(),
-                usuario.getNombre(),
-                usuario.getEmail(),
-                usuario.getTelefono(),
-                usuario.getDireccion(),
-                usuario.getRol(),
-                usuario.getFechaRegistro()
-        );
+    private UsuarioSalidaDTO salida(Usuario u) {
+        return new UsuarioSalidaDTO(u.getIdUsuario(), u.getNombre(), u.getEmail(),
+                u.getTelefono(), u.getDireccion(), u.getRol(), u.getFechaRegistro());
     }
 }

@@ -10,10 +10,14 @@ services:
     ports:
       - "8081:8081"
 
+    env_file:
+      - ${JWT_ENV_FILE:-../sonidovivo-config/jwt.env}
+
     environment:
       DB_URL: ${DB_URL}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      CORS_ORIGENES: ${CORS_ORIGENES:-http://localhost:5173}
 
     volumes:
       - ./wallet:/wallet:ro

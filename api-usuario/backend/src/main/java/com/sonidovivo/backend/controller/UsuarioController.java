@@ -1,103 +1,74 @@
-
 package com.sonidovivo.backend.controller;
 
-import com.sonidovivo.backend.dto.UsuarioEntradaDTO;
-import com.sonidovivo.backend.dto.UsuarioSalidaDTO;
+import com.sonidovivo.backend.dto.*;
 import com.sonidovivo.backend.service.UsuarioService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.net.URI;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Usuarios", description = "Gestion de usuarios")
 @RestController
 @RequestMapping("/api/v1/usuarios")
+@RequiredArgsConstructor
 public class UsuarioController {
+    private final UsuarioService usuarios;
 
-    @Autowired
-    private UsuarioService service;
-
-    @Operation(summary = "Listar usuarios",
-            description = "Lista todos los usuarios registrados")
-    @ApiResponse(responseCode = "200", description = "OK")
-    @GetMapping
-    public List<UsuarioSalidaDTO> listar() {
-        return service.listar();
-    }
-
-    @Operation(summary = "Buscar usuario por ID")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(responseCode = "404", description = "No encontrado")
-    })
-    @GetMapping("/{id}")
-    public UsuarioSalidaDTO buscar(@PathVariable Long id) {
-        return service.buscar(id);
-    }
-
-    @Operation(summary = "Buscar usuario por correo")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(responseCode = "404", description = "No encontrado")
-    })
-    @GetMapping("/email/{email:.+}")
-    public UsuarioSalidaDTO buscarPorEmail(
-            @PathVariable String email) {
-
-        return service.buscarPorEmail(email);
-    }
-
-    @Operation(summary = "Registrar un nuevo usuario")
-    @ApiResponses({
+    @Operation(summary = "Registrar cliente", responses = {
         @ApiResponse(responseCode = "201", description = "Creado"),
-        @ApiResponse(responseCode = "400", description = "Datos invalidos"),
-        @ApiResponse(responseCode = "409", description = "Correo registrado")
+        @ApiResponse(responseCode = "400", description = "Entrada inválida"),
+        @ApiResponse(responseCode = "409", description = "Correo duplicado")
     })
     @PostMapping
-    public ResponseEntity<UsuarioSalidaDTO> crear(
-            @Valid @RequestBody UsuarioEntradaDTO entrada) {
-
-        UsuarioSalidaDTO creado = service.crear(entrada);
-
-        return ResponseEntity.created(
-                URI.create("/api/v1/usuarios/" + creado.getId())
-        ).body(creado);
+    public ResponseEntity<UsuarioSalidaDTO> crear(@Valid @RequestBody UsuarioEntradaDTO d) {
+        var creado = usuarios.crear(d);
+        return ResponseEntity.created(URI.create("/api/v1/usuarios/" + creado.getId()))
+                .body(creado);
     }
 
-    @Operation(summary = "Actualizar usuario")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(responseCode = "404", description = "No encontrado")
-    })
+    @Operation(summary = "Listar usuarios · administrador", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping
+    public List<UsuarioSalidaDTO> listar() {
+        return usuarios.listar();
+    }
+
+    @Operation(summary = "Consultar cuenta · titular o administrador", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/{id}")
+    public UsuarioSalidaDTO buscar(@PathVariable Long id, @AuthenticationPrincipal Jwt actor) {
+        return usuarios.buscar(id, actor);
+    }
+
+    @Operation(summary = "Buscar por correo · administrador", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/email/{email:.+}")
+    public UsuarioSalidaDTO buscarPorEmail(@PathVariable String email) {
+        return usuarios.buscarPorEmail(email);
+    }
+
+    @Operation(summary = "Editar datos · titular o administrador", security = @SecurityRequirement(name = "bearerAuth"))
     @PutMapping("/{id}")
-    public UsuarioSalidaDTO actualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody UsuarioEntradaDTO entrada) {
-
-        return service.actualizar(id, entrada);
+    public UsuarioSalidaDTO actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioActualizacionDTO d,
+                                      @AuthenticationPrincipal Jwt actor) {
+        return usuarios.actualizar(id, d, actor);
     }
 
-    @Operation(summary = "Eliminar usuario")
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Eliminado"),
-        @ApiResponse(responseCode = "404", description = "No encontrado")
-    })
+    @Operation(summary = "Eliminar usuario · administrador", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "204", description = "Usuario eliminado")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(
-            @PathVariable Long id) {
-
-        service.eliminar(id);
-
+    public ResponseEntity<Void> eliminar(@PathVariable Long id, @AuthenticationPrincipal Jwt actor) {
+        usuarios.eliminar(id, actor);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Cambiar rol · administrador", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping("/{id}/rol")
+    public UsuarioSalidaDTO rol(@PathVariable Long id, @Valid @RequestBody CambioRolDTO d,
+                               @AuthenticationPrincipal Jwt actor) {
+        return usuarios.cambiarRol(id, d.rol(), actor);
     }
 }
