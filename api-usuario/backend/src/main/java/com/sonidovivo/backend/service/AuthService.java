@@ -5,6 +5,7 @@ import com.sonidovivo.backend.model.Rol;
 import com.sonidovivo.backend.repository.UsuarioRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,14 +22,17 @@ public class AuthService {
     private final PasswordEncoder passwords;
     private final JwtEncoder jwt;
     private final String emisor;
+    private final String audiencia;
     private final String hashFicticio;
 
     public AuthService(UsuarioRepository usuarios, PasswordEncoder passwords,
-                       JwtEncoder jwt, @Value("${app.jwt.emisor}") String emisor) {
+                       JwtEncoder jwt, @Value("${app.jwt.emisor}") String emisor,
+                       @Value("${app.jwt.audiencia}") String audiencia) {
         this.usuarios = usuarios;
         this.passwords = passwords;
         this.jwt = jwt;
         this.emisor = emisor;
+        this.audiencia = audiencia;
         this.hashFicticio = passwords.encode(UUID.randomUUID().toString());
     }
 
@@ -48,6 +52,7 @@ public class AuthService {
         var claims = JwtClaimsSet.builder().issuer(emisor).issuedAt(ahora)
                 .expiresAt(ahora.plusSeconds(VIGENCIA_SEGUNDOS))
                 .subject(cuenta.getIdUsuario().toString())
+                .audience(List.of(audiencia))
                 .claim("rol", cuenta.getRol()).build();
         var encabezado = JwsHeader.with(MacAlgorithm.HS256).build();
         var token = jwt.encode(JwtEncoderParameters.from(encabezado, claims));

@@ -54,7 +54,8 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder(SecretKey clave, UsuarioRepository usuarios,
-                          @Value("${app.jwt.emisor}") String emisor) {
+                          @Value("${app.jwt.emisor}") String emisor,
+                          @Value("${app.jwt.audiencia}") String audiencia) {
         var decoder = NimbusJwtDecoder.withSecretKey(clave)
                 .macAlgorithm(MacAlgorithm.HS256).build();
         var tiempo = new JwtTimestampValidator(Duration.ZERO);
@@ -64,6 +65,10 @@ public class SecurityConfig {
                     tiempo, emisorValido).validate(jwt);
             if (validacion.hasErrors()) return validacion;
             if (jwt.getExpiresAt() == null || jwt.getSubject() == null) {
+                return invalido();
+            }
+            var audiencias = jwt.getAudience();
+            if (audiencias == null || !audiencias.contains(audiencia)) {
                 return invalido();
             }
             try {

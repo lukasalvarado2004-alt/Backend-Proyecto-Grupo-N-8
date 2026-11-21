@@ -53,6 +53,10 @@ la compatibilidad de las pruebas existentes. En Postman, usa el valor en
 El cliente descarta el token al cerrar sesión e inicia sesión de nuevo cuando
 vence. Esta versión prescinde de endpoints de cierre y renovación.
 
+El backend emite JWT para la audiencia `sonidovivo-api` y responde `401` en
+rutas protegidas si el token carece de `aud` o está destinado a otra API. Al
+desplegar esta validación, vuelve a iniciar sesión para obtener un token nuevo.
+
 Verifica que la columna `USUARIOS.PASSWORD_HASH` admita al menos 60 caracteres
 antes de registrar cuentas con BCrypt. La implementación usa las columnas
 existentes de `USUARIOS`.
