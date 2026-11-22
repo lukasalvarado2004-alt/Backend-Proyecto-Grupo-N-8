@@ -35,9 +35,6 @@ archivo privado, puedes indicar su ruta mediante `JWT_ENV_FILE`.
 Compose sigue leyendo las variables de Oracle del archivo de entorno habitual.
 Si usas un archivo de Oracle en otra ruta, indica esa ruta con `--env-file`.
 
-Swagger para el entorno local está en
-[localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html).
-Usa HTTPS o un túnel SSH para enviar credenciales o tokens a un servidor remoto.
 
 ### Autenticación y permisos
 
