@@ -31,18 +31,6 @@ La entrada se llama `JWT_SECRET` y contiene una clave aleatoria de 32 bytes
 en Base64. Conserva la misma clave entre reinicios. Si configuraste otro
 archivo privado, puedes indicar su ruta mediante `JWT_ENV_FILE`.
 
-Desde la raíz del proyecto, crea ese archivo una vez si aún no lo tienes y
-arranca el backend. Si ya tienes una clave JWT, reutilízala.
-
-```bash
-install -d -m 700 ../sonidovivo-config
-if [ ! -e ../sonidovivo-config/jwt.env ]; then
-    jwt_clave=$(openssl rand -base64 32) &&
-        (umask 077 && printf 'JWT_SECRET=%s\n' "$jwt_clave" > ../sonidovivo-config/jwt.env)
-    unset jwt_clave
-fi
-sudo docker compose up --build
-```
 
 Compose sigue leyendo las variables de Oracle del archivo de entorno habitual.
 Si usas un archivo de Oracle en otra ruta, indica esa ruta con `--env-file`.
@@ -79,33 +67,11 @@ Verifica que la columna `USUARIOS.PASSWORD_HASH` admita al menos 60 caracteres
 antes de registrar cuentas con BCrypt. La implementación usa las columnas
 existentes de `USUARIOS`.
 
-### Arranque con Docker Compose
-
-Docker Compose lee la clave JWT del archivo privado
-`../sonidovivo-config/jwt.env`, en una carpeta hermana del repositorio.
-La entrada se llama `JWT_SECRET` y contiene una clave aleatoria de 32 bytes
-en Base64. Conserva la misma clave entre reinicios. Si configuraste otro
-archivo privado, puedes indicar su ruta mediante `JWT_ENV_FILE`.
-
-Desde la raíz del proyecto, crea ese archivo una vez si aún no lo tienes y
-arranca el backend. Si ya tienes una clave JWT, reutilízala.
-
-```bash
-install -d -m 700 ../sonidovivo-config
-if [ ! -e ../sonidovivo-config/jwt.env ]; then
-    jwt_clave=$(openssl rand -base64 32) &&
-        (umask 077 && printf 'JWT_SECRET=%s\n' "$jwt_clave" > ../sonidovivo-config/jwt.env)
-    unset jwt_clave
-fi
-sudo docker compose up --build
-```
-
-Compose sigue leyendo las variables de Oracle del archivo de entorno habitual.
-Si usas un archivo de Oracle en otra ruta, indica esa ruta con `--env-file`.
-
 Swagger para el entorno local está en
 [localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html).
 Usa HTTPS o un túnel SSH para enviar credenciales o tokens a un servidor remoto.
+
+Dirección de repos tirio frontend: github.com/lukasalvarado2004-alt/Proyecto-Sonido-Vivo-N-8
 
 ### Autenticación y permisos
 
