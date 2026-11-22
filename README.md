@@ -16,7 +16,7 @@ Swagger para el entorno local está en
 [localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html).
 Usa HTTPS o un túnel SSH para enviar credenciales o tokens a un servidor remoto.
 
-Dirección de repos tirio frontend: github.com/lukasalvarado2004-alt/Proyecto-Sonido-Vivo-N-8
+Dirección de repositorio frontend: github.com/lukasalvarado2004-alt/Proyecto-Sonido-Vivo-N-8
 
 ## Módulo de usuarios
 
