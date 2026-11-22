@@ -1,3 +1,23 @@
+# Proyecto Semestral — Equipo 8
+
+### Curso: Desarrollo FullStack II  — Duoc UC 2026
+
+---
+
+##  Integrantes
+
+* **Franco Villarroel** — fra.villarroelg@duocuc.cl
+* **Nicolás Vega** — nicola.vegac@duocuc.cl
+* **Lukas Tirapegui** — lu.tirapegui@duocuc.cl
+
+---
+##  Links
+Swagger para el entorno local está en
+[localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html).
+Usa HTTPS o un túnel SSH para enviar credenciales o tokens a un servidor remoto.
+
+Dirección de repos tirio frontend: github.com/lukasalvarado2004-alt/Proyecto-Sonido-Vivo-N-8
+
 ## Módulo de usuarios
 
 El backend usa Oracle Cloud mediante el wallet y escucha en el puerto 8081. El alta
@@ -64,11 +84,7 @@ Verifica que la columna `USUARIOS.PASSWORD_HASH` admita al menos 60 caracteres
 antes de registrar cuentas con BCrypt. La implementación usa las columnas
 existentes de `USUARIOS`.
 
-Swagger para el entorno local está en
-[localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html).
-Usa HTTPS o un túnel SSH para enviar credenciales o tokens a un servidor remoto.
 
-Dirección de repos tirio frontend: github.com/lukasalvarado2004-alt/Proyecto-Sonido-Vivo-N-8
 
 ### Autenticación y permisos
 
