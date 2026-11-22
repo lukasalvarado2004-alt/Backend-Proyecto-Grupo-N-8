@@ -4,12 +4,6 @@ El backend usa Oracle Cloud mediante el wallet y escucha en el puerto 8081. El a
 de usuarios guarda un hash BCrypt y asigna el rol CLIENTE. Las cuentas con
 contraseñas anteriores en texto plano necesitan restablecerlas mediante un proceso
 autorizado. Usa una cuenta ficticia recién registrada para comprobar el login.
-## Módulo de usuarios
-
-El backend usa Oracle Cloud mediante el wallet y escucha en el puerto 8081. El alta
-de usuarios guarda un hash BCrypt y asigna el rol CLIENTE. Las cuentas con
-contraseñas anteriores en texto plano necesitan restablecerlas mediante un proceso
-autorizado. Usa una cuenta ficticia recién registrada para comprobar el login.
 
 ### Estado del desarrollo
 
