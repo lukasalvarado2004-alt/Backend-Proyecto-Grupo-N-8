@@ -11,7 +11,7 @@ services:
       - "8081:8081"
 
     env_file:
-      - ${JWT_ENV_FILE:-../sonidovivo-config/jwt.env}
+      - ${JWT_ENV_FILE:-./sonidovivo-config/jwt.env}
 
     environment:
       DB_URL: ${DB_URL}
@@ -22,4 +22,23 @@ services:
     volumes:
       - ./wallet:/wallet:ro
 
+    restart: unless-stopped
+
+  api-producto:
+    build:
+      context: ./api-producto/backend
+      dockerfile: Dockerfile
+    container_name: api-producto
+    ports:
+      - "8082:8082"
+    env_file:
+      - ${JWT_ENV_FILE:-./sonidovivo-config/jwt.env}
+    environment:
+      SERVER_PORT: 8082
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CORS_ORIGENES: ${CORS_ORIGENES:-http://localhost:5173}
+    volumes:
+      - ./wallet:/wallet:ro
     restart: unless-stopped
