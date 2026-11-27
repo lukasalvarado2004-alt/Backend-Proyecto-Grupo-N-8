@@ -1,26 +1,32 @@
-package main.java.com.sonidovivo.backend.dto;
+package com.sonidovivo.backend.dto;
+
+import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
 
 public record ProductoEntradaDTO(
+
     @NotNull(message = "La categoría es obligatoria")
     Long idCategoria,
 
     @NotBlank(message = "El nombre es obligatorio")
-    @Size(min = 2, max = 120)
+    @Size(min = 2, max = 150)
     String nombre,
 
     @Size(max = 500)
     String descripcion,
 
     @NotNull(message = "El precio es obligatorio")
-    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0")
+    @DecimalMin(value = "0.01")
+    @Digits(integer = 8, fraction = 2)
     BigDecimal precio,
 
     @NotNull(message = "El stock es obligatorio")
-    @Min(value = 0, message = "El stock no puede ser negativo")
+    @Min(value = 0)
     Integer stock,
 
-    @Size(max = 500)
+    @Size(max = 255)
     String imagenUrl
+
 ) {
     public ProductoEntradaDTO {
         nombre = nombre == null ? null : nombre.strip();

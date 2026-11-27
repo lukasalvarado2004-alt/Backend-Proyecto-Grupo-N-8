@@ -1,12 +1,12 @@
-package main.java.com.sonidovivo.backend.service;
+package com.sonidovivo.backend.service;
 
-import com.sonidovivo.producto.dto.ProductoEntradaDTO;
-import com.sonidovivo.producto.dto.ProductoSalidaDTO;
-import com.sonidovivo.producto.exception.RecursoNoEncontradoException;
-import com.sonidovivo.producto.model.Categoria;
-import com.sonidovivo.producto.model.Producto;
-import com.sonidovivo.producto.repository.CategoriaRepository;
-import com.sonidovivo.producto.repository.ProductoRepository;
+import com.sonidovivo.backend.dto.ProductoEntradaDTO;
+import com.sonidovivo.backend.dto.ProductoSalidaDTO;
+import com.sonidovivo.backend.exception.RecursoNoEncontradoException;
+import com.sonidovivo.backend.model.Categoria;
+import com.sonidovivo.backend.model.Producto;
+import com.sonidovivo.backend.repository.CategoriaRepository;
+import com.sonidovivo.backend.repository.ProductoRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,7 +39,7 @@ public class ProductoService {
 
     @Transactional
     public ProductoSalidaDTO crear(ProductoEntradaDTO d, Jwt actor) {
-        comprobarAdministrador(actor);
+        comprobarPermiso(actor);
         var categoria = obtenerCategoria(d.idCategoria());
 
         var p = new Producto();
@@ -56,7 +56,7 @@ public class ProductoService {
 
     @Transactional
     public ProductoSalidaDTO actualizar(Long id, ProductoEntradaDTO d, Jwt actor) {
-        comprobarAdministrador(actor);
+        comprobarPermiso(actor);
         var p = obtenerActivo(id);
         var categoria = obtenerCategoria(d.idCategoria());
 
@@ -72,15 +72,16 @@ public class ProductoService {
 
     @Transactional
     public void eliminar(Long id, Jwt actor) {
-        comprobarAdministrador(actor);
+        comprobarPermiso(actor);
         var p = obtenerActivo(id);
         p.setActivo(0);
     }
 
-    private void comprobarAdministrador(Jwt actor) {
-        if (actor == null || !"ADMINISTRADOR".equals(actor.getClaimAsString("rol"))) {
+    private void comprobarPermiso(Jwt actor) {
+        if (actor == null || !("ADMINISTRADOR".equals(actor.getClaimAsString("rol"))
+                || "VENDEDOR".equals(actor.getClaimAsString("rol")))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Acceso denegado: se requiere rol de administrador.");
+                    "Acceso denegado: se requiere rol de administrador o vendedor.");
         }
     }
 

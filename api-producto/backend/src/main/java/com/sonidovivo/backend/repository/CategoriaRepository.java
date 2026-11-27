@@ -1,4 +1,8 @@
-package main.java.com.sonidovivo.backend.repository;
+package com.sonidovivo.backend.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.sonidovivo.backend.model.Categoria;
+
 
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {}
     

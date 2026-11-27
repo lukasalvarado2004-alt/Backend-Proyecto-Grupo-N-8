@@ -1,4 +1,4 @@
-package main.java.com.sonidovivo.backend.exception;
+package com.sonidovivo.backend.exception;
 
 import java.util.List;
 import java.util.Map;

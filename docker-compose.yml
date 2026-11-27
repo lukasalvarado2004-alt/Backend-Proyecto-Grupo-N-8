@@ -42,3 +42,22 @@ services:
     volumes:
       - ./wallet:/wallet:ro
     restart: unless-stopped
+
+
+  api-pedido:
+    build:
+      context: ./api-pedido
+      dockerfile: Dockerfile
+    container_name: api-pedido
+    ports:
+      - "8083:8083"
+    env_file:
+      - ${JWT_ENV_FILE:-./sonidovivo-config/jwt.env}
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CORS_ORIGENES: ${CORS_ORIGENES:-http://localhost:5173}
+    volumes:
+      - ./wallet:/wallet:ro
+    restart: unless-stopped

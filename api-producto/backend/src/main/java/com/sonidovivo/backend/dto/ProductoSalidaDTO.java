@@ -1,4 +1,4 @@
-package main.java.com.sonidovivo.backend.dto;
+package com.sonidovivo.backend.dto;
 import java.math.BigDecimal;
 
 public record ProductoSalidaDTO(
