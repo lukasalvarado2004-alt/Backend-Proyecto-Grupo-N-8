@@ -44,6 +44,7 @@ services:
     restart: unless-stopped
 
 
+
   api-pedido:
     build:
       context: ./api-pedido
@@ -61,3 +62,4 @@ services:
     volumes:
       - ./wallet:/wallet:ro
     restart: unless-stopped
+
